@@ -237,8 +237,14 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: _pickImage,
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Tirar Foto'),
+                        icon: Icon(
+                          Icons.camera_alt,
+                          color: Colors.orange.shade700,
+                        ),
+                        label: Text(
+                          'Tirar Foto',
+                          style: TextStyle(color: Colors.orange.shade700),
+                        ),
                       ),
                     ),
               const SizedBox(height: 8),
@@ -279,8 +285,14 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: _pickFiles,
-                        icon: const Icon(Icons.upload_file),
-                        label: const Text('Selecionar Arquivos'),
+                        icon: Icon(
+                          Icons.upload_file,
+                          color: Colors.orange.shade700,
+                        ),
+                        label: Text(
+                          'Selecionar Arquivos',
+                          style: TextStyle(color: Colors.orange.shade700),
+                        ),
                       ),
                     ),
 
@@ -312,6 +324,9 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isSaving ? null : _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade700,
+                        ),
                         child: _isSaving
                             ? const SizedBox(
                                 width: 24,
@@ -320,7 +335,10 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text('Salvar'),
+                            : const Text(
+                                'Salvar',
+                                style: TextStyle(color: Colors.white),
+                              ),
                       ),
                     ),
             ],

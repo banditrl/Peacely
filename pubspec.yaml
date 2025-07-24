@@ -18,6 +18,11 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/moradia-da-paz-icon.png"
+
 environment:
   sdk: ^3.8.1
 
@@ -42,6 +47,7 @@ dependencies:
   firebase_storage: ^12.4.10
   flutter_secure_storage: ^9.2.4
   path_provider: ^2.1.5
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -66,8 +72,9 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+    - assets/moradia-da-paz-logo.png
+
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

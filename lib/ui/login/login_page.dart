@@ -38,14 +38,19 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7A156),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const FlutterLogo(size: 100), // Placeholder logo
+              Image.asset(
+                'assets/moradia-da-paz-logo.png',
+                height:
+                    MediaQuery.of(context).size.height *
+                    0.4, // ~30% of screen height
+              ),
+
               const SizedBox(height: 24),
               TextField(
                 controller: _emailController,
@@ -64,16 +69,23 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _login,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade700,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 12,
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade700,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text(
+                    'Entrar',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
-                child: const Text('Entrar'),
               ),
             ],
           ),

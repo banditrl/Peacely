@@ -73,7 +73,13 @@ class _ResidentViewPageState extends State<ResidentViewPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _filter,
-                child: const Text('Filtrar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade700,
+                ),
+                child: const Text(
+                  'Filtrar',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ),
             const SizedBox(height: 12),
