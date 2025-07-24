@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:peacely/infra/auth/auth_service.dart';
 
@@ -14,18 +15,30 @@ class _LoginPageState extends State<LoginPage> {
 
   void _login() async {
     try {
-      await AuthService.instance.signInWithEmailAndPassword(
+      final user = await AuthService.instance.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Login realizado com sucesso!')));
+      final doc = await FirebaseFirestore.instance
+          .collection('residents')
+          .doc(user.uid)
+          .get();
 
-        Navigator.pushReplacementNamed(context, '/control-panel');
+      if (!mounted) {
+        return;
       }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login realizado com sucesso!')));
+
+      if (doc.exists) {
+        Navigator.pushReplacementNamed(context, '/home');
+        return;
+      }
+
+      Navigator.pushReplacementNamed(context, '/control-panel');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:peacely/ui/home/home_page.dart';
 import 'package:peacely/ui/resident/edit/resident_edit_page.dart';
 import 'package:peacely/ui/resident/view/resident_view_page.dart';
 import 'firebase_options.dart';
@@ -26,6 +27,7 @@ class PeacelyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
+        '/home': (context) => const HomePage(),
         '/control-panel': (context) => const ControlPanelPage(),
         '/resident-register': (context) => const ResidentRegisterPage(),
         '/resident-view': (context) => const ResidentViewPage(),

@@ -9,12 +9,12 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
-  Future<User?> signInWithEmailAndPassword(
+  Future<User> signInWithEmailAndPassword(
     String? email,
     String? password,
   ) async {
     if (email == null || password == null) {
-      return null;
+      throw Exception('Email e senha não podem ser nulos.');
     }
 
     UserCredential userCredential = await _auth.signInWithEmailAndPassword(
@@ -22,11 +22,15 @@ class AuthService {
       password: password,
     );
 
+    if (userCredential.user == null) {
+      throw Exception('Usuário não encontrado.');
+    }
+
     await _secureStorage.write(key: userEmailKey, value: email);
 
     await _secureStorage.write(key: userPasswordKey, value: password);
 
-    return userCredential.user;
+    return userCredential.user!;
   }
 
   Future<String> createResidentUserWithEmailAndPassword(
@@ -42,6 +46,10 @@ class AuthService {
       await _secureStorage.read(key: userEmailKey),
       await _secureStorage.read(key: userPasswordKey),
     );
+
+    if (userCredential.user == null) {
+      throw Exception('Usuário não encontrado.');
+    }
 
     return userCredential.user!.uid;
   }
