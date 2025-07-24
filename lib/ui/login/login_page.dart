@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:peacely/infra/auth/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,23 +14,23 @@ class _LoginPageState extends State<LoginPage> {
 
   void _login() async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: '${_emailController.text.trim()}@peacely.com',
-        password: _passwordController.text,
+      await AuthService.instance.signInWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login realizado com sucesso!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Login realizado com sucesso!')));
 
         Navigator.pushReplacementNamed(context, '/control-panel');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Usuário ou senha inválidos.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Usuário ou senha inválidos.')));
       }
     }
   }

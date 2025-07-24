@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:peacely/domain/entities/resident.dart';
+import 'package:peacely/infra/auth/auth_service.dart';
 
 class ResidentRegisterPage extends StatefulWidget {
   const ResidentRegisterPage({super.key});
@@ -11,6 +15,9 @@ class ResidentRegisterPage extends StatefulWidget {
 }
 
 class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
+
   final _fullNameController = TextEditingController();
   final _cpfController = TextEditingController();
   final _rgController = TextEditingController();
@@ -27,7 +34,9 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
   final _imagePicker = ImagePicker();
 
   Future<void> _pickImage() async {
-    final XFile? picked = await _imagePicker.pickImage(source: ImageSource.camera);
+    final XFile? picked = await _imagePicker.pickImage(
+      source: ImageSource.camera,
+    );
     if (picked != null) {
       setState(() => _photos.add(File(picked.path)));
     }
@@ -43,6 +52,90 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
   void _removePhoto(int index) => setState(() => _photos.removeAt(index));
   void _removeFile(int index) => setState(() => _files.removeAt(index));
 
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final storage = FirebaseStorage.instance;
+      final residentsCollection = firestore.collection('residents');
+
+      // Gerar código do morador
+      final snapshot = await residentsCollection.get();
+      final generatedCode =
+          'MP${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+      // Criar usuário no Firebase Auth
+      final uid = await AuthService.instance
+          .createResidentUserWithEmailAndPassword(
+            _cpfController.text.trim(),
+            generatedCode,
+          );
+
+      // Upload das fotos
+      final List<String> photoPaths = [];
+      for (int i = 0; i < _photos.length; i++) {
+        final file = _photos[i];
+        final path = 'residents/$uid/photos/photo_$i.jpg';
+        final ref = storage.ref().child(path);
+        await ref.putFile(file);
+        photoPaths.add(path);
+      }
+
+      // Upload dos arquivos
+      final List<String> filePaths = [];
+      for (int i = 0; i < _files.length; i++) {
+        final file = _files[i];
+        final fileData = File(file.path!);
+        final path = 'residents/$uid/files/file_${i}_${file.name}';
+        final ref = storage.ref().child(path);
+        await ref.putFile(fileData);
+        filePaths.add(path);
+      }
+
+      // Criar entidade Resident diretamente
+      final resident = Resident(
+        uid: uid,
+        code: generatedCode,
+        fullName: _fullNameController.text.trim(),
+        rg: _rgController.text.trim(),
+        cpf: _cpfController.text.trim(),
+        street: _streetController.text.trim(),
+        alley: _alleyController.text.trim(),
+        number: _numberController.text.trim(),
+        complement: _complementController.text.trim().isEmpty
+            ? null
+            : _complementController.text.trim(),
+        familySize: int.tryParse(_familySizeController.text.trim()) ?? 1,
+        contact: _contactController.text.trim(),
+        photos: photoPaths,
+        files: filePaths,
+      );
+
+      // Salvar no Firestore
+      await residentsCollection.doc(resident.uid).set(resident.toMap());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Morador $generatedCode cadastrado com sucesso!'),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao cadastrar morador.')));
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,97 +145,127 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            _buildTextField('Nome completo', _fullNameController),
-            const SizedBox(height: 16),
-            _buildTextField('CPF', _cpfController),
-            const SizedBox(height: 16),
-            _buildTextField('RG', _rgController),
-            const SizedBox(height: 16),
-            _buildTextField('Telefone', _contactController),
-            const SizedBox(height: 16),
-            _buildTextField('Rua', _streetController),
-            const SizedBox(height: 16),
-            _buildTextField('Viela', _alleyController),
-            const SizedBox(height: 16),
-            _buildTextField('Número', _numberController),
-            const SizedBox(height: 16),
-            _buildTextField('Complemento', _complementController),
-            const SizedBox(height: 16),
-            _buildTextField('Número de familiares', _familySizeController, isNumber: true),
-            const SizedBox(height: 24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildTextField('Nome completo', _fullNameController),
+              const SizedBox(height: 16),
+              _buildTextField('CPF', _cpfController),
+              const SizedBox(height: 16),
+              _buildTextField('RG', _rgController),
+              const SizedBox(height: 16),
+              _buildTextField('Telefone', _contactController),
+              const SizedBox(height: 16),
+              _buildTextField('Rua', _streetController),
+              const SizedBox(height: 16),
+              _buildTextField('Viela', _alleyController),
+              const SizedBox(height: 16),
+              _buildTextField('Número', _numberController),
+              const SizedBox(height: 16),
+              _buildTextField('Complemento', _complementController),
+              const SizedBox(height: 16),
+              _buildTextField(
+                'Número de familiares',
+                _familySizeController,
+                isNumber: true,
+              ),
+              const SizedBox(height: 24),
 
-            // Photos
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Fotos:'),
-                ElevatedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Tirar Foto'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: List.generate(_photos.length, (index) => Stack(
-                alignment: Alignment.topRight,
+              // Photos
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Image.file(_photos[index], width: 100, height: 100, fit: BoxFit.cover),
-                  GestureDetector(
-                    onTap: () => _removePhoto(index),
-                    child: const CircleAvatar(radius: 10, child: Icon(Icons.close, size: 14)),
-                  )
+                  const Text('Fotos:'),
+                  ElevatedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('Tirar Foto'),
+                  ),
                 ],
-              )),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Files
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Arquivos:'),
-                ElevatedButton.icon(
-                  onPressed: _pickFiles,
-                  icon: const Icon(Icons.upload_file),
-                  label: const Text('Selecionar Arquivos'),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: List.generate(
+                  _photos.length,
+                  (index) => Stack(
+                    alignment: Alignment.topRight,
+                    children: [
+                      Image.file(
+                        _photos[index],
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                      GestureDetector(
+                        onTap: () => _removePhoto(index),
+                        child: const CircleAvatar(
+                          radius: 10,
+                          child: Icon(Icons.close, size: 14),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Column(
-              children: List.generate(_files.length, (index) => ListTile(
-                title: Text(_files[index].name),
-                trailing: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => _removeFile(index),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Files
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Arquivos:'),
+                  ElevatedButton.icon(
+                    onPressed: _pickFiles,
+                    icon: const Icon(Icons.upload_file),
+                    label: const Text('Selecionar Arquivos'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Column(
+                children: List.generate(
+                  _files.length,
+                  (index) => ListTile(
+                    title: Text(_files[index].name),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => _removeFile(index),
+                    ),
+                  ),
                 ),
-              )),
-            ),
+              ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 32),
 
-            ElevatedButton(
-              onPressed: () {
-                // Future: validate -> create user -> get uid -> generate code -> save to Firestore
-              },
-              child: const Text('Salvar'),
-            ),
-          ],
+              ElevatedButton(
+                onPressed: _isSaving ? null : _save,
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Salvar'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool isNumber = false}) {
-    return TextField(
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool isNumber = false,
+  }) {
+    return TextFormField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      validator: (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
