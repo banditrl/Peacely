@@ -4,11 +4,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:peacely/domain/entities/resident.dart';
 import 'package:peacely/infra/auth/auth_service.dart';
 
 class ResidentRegisterPage extends StatefulWidget {
-  const ResidentRegisterPage({super.key});
+  final Resident? resident;
+
+  const ResidentRegisterPage({super.key, this.resident});
 
   @override
   State<ResidentRegisterPage> createState() => _ResidentRegisterPageState();
@@ -17,6 +20,7 @@ class ResidentRegisterPage extends StatefulWidget {
 class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
+  bool get _isEditing => widget.resident != null;
 
   final _fullNameController = TextEditingController();
   final _cpfController = TextEditingController();
@@ -32,6 +36,60 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
   final List<PlatformFile> _files = [];
 
   final _imagePicker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_isEditing) {
+      return;
+    }
+
+    final resident = widget.resident!;
+    _fullNameController.text = resident.fullName;
+    _cpfController.text = resident.cpf;
+    _rgController.text = resident.rg;
+    _contactController.text = resident.contact;
+    _streetController.text = resident.street;
+    _alleyController.text = resident.alley;
+    _numberController.text = resident.number;
+    _complementController.text = resident.complement ?? '';
+    _familySizeController.text = resident.familySize.toString();
+    _loadPhotosFromStorage(resident.photos);
+    _loadFilesFromStorage(resident.files);
+  }
+
+  Future<void> _loadPhotosFromStorage(List<String> paths) async {
+    final storage = FirebaseStorage.instance;
+
+    for (final path in paths) {
+      final ref = storage.ref(path);
+      final bytes = await ref.getData();
+
+      if (bytes != null) {
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/${path.split('/').last}');
+        await tempFile.writeAsBytes(bytes);
+
+        _photos.add(tempFile);
+      }
+    }
+
+    setState(() {}); // to trigger UI update
+  }
+
+  Future<void> _loadFilesFromStorage(List<String> paths) async {
+    final storage = FirebaseStorage.instance;
+
+    for (final path in paths) {
+      final ref = storage.ref(path);
+      final bytes = await ref.getData();
+      final name = path.split('/').last;
+
+      _files.add(
+        PlatformFile(name: name, size: bytes?.length ?? 0, bytes: bytes),
+      );
+    }
+  }
 
   Future<void> _pickImage() async {
     final XFile? picked = await _imagePicker.pickImage(
@@ -140,7 +198,7 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadastrar Morador'),
+        title: Text(_isEditing ? 'Detalhes do Morador' : 'Cadastrar Morador'),
         backgroundColor: Colors.orange.shade700,
       ),
       body: SingleChildScrollView(
@@ -173,15 +231,18 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
               const SizedBox(height: 24),
 
               // Photos
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Tirar Foto'),
-                ),
-              ),
+              _isEditing
+                  ? const SizedBox.shrink()
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _pickImage,
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Tirar Foto'),
+                      ),
+                    ),
               const SizedBox(height: 8),
+
               Wrap(
                 spacing: 8,
                 children: List.generate(
@@ -195,13 +256,15 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
                         height: 100,
                         fit: BoxFit.cover,
                       ),
-                      GestureDetector(
-                        onTap: () => _removePhoto(index),
-                        child: const CircleAvatar(
-                          radius: 10,
-                          child: Icon(Icons.close, size: 14),
-                        ),
-                      ),
+                      _isEditing
+                          ? const SizedBox.shrink()
+                          : GestureDetector(
+                              onTap: () => _removePhoto(index),
+                              child: const CircleAvatar(
+                                radius: 10,
+                                child: Icon(Icons.close, size: 14),
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -210,24 +273,32 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
               const SizedBox(height: 24),
 
               // Files
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _pickFiles,
-                  icon: const Icon(Icons.upload_file),
-                  label: const Text('Selecionar Arquivos'),
-                ),
-              ),
+              _isEditing
+                  ? const SizedBox.shrink()
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _pickFiles,
+                        icon: const Icon(Icons.upload_file),
+                        label: const Text('Selecionar Arquivos'),
+                      ),
+                    ),
 
               const SizedBox(height: 8),
-              Column(
-                children: List.generate(
-                  _files.length,
-                  (index) => ListTile(
-                    title: Text(_files[index].name),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => _removeFile(index),
+
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  children: List.generate(
+                    _files.length,
+                    (index) => ListTile(
+                      title: Text(_files[index].name),
+                      trailing: _isEditing
+                          ? const SizedBox.shrink()
+                          : IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => _removeFile(index),
+                            ),
                     ),
                   ),
                 ),
@@ -235,19 +306,23 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
 
               const SizedBox(height: 32),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : _save,
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Salvar'),
-                ),
-              ),
+              _isEditing
+                  ? const SizedBox.shrink()
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isSaving ? null : _save,
+                        child: _isSaving
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Salvar'),
+                      ),
+                    ),
             ],
           ),
         ),
@@ -262,6 +337,7 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
   }) {
     return TextFormField(
       controller: controller,
+      enabled: !_isEditing,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       validator: (value) =>
           value == null || value.isEmpty ? 'Campo obrigatório' : null,

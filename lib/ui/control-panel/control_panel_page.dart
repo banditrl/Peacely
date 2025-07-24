@@ -6,7 +6,6 @@ class ControlPanelPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7A156),
       appBar: AppBar(
         backgroundColor: Colors.orange.shade700,
         title: const Text('Painel de Controle'),
@@ -17,21 +16,29 @@ class ControlPanelPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/resident-register'),
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/resident-register'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
+                backgroundColor: Colors.orange.shade700,
+
                 minimumSize: const Size(double.infinity, 50),
               ),
-              child: const Text('Cadastrar Morador'),
+              child: const Text(
+                'Cadastrar Morador',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/resident-view'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
+                backgroundColor: Colors.orange.shade700,
                 minimumSize: const Size(double.infinity, 50),
               ),
-              child: const Text('Gerenciar Cadastros'),
+              child: const Text(
+                'Gerenciar Cadastros',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),

@@ -13,7 +13,7 @@ class ResidentEditPage extends StatelessWidget {
       body: ListView.separated(
         padding: const EdgeInsets.all(24),
         itemCount: 5, // Placeholder list
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           return ListTile(
             tileColor: Colors.orange.shade100,

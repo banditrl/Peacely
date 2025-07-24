@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:peacely/domain/entities/resident.dart';
+import 'package:peacely/ui/resident/register/resident_register_page.dart';
 
 class ResidentViewPage extends StatefulWidget {
   const ResidentViewPage({super.key});
@@ -99,8 +100,17 @@ class _ResidentViewPageState extends State<ResidentViewPage> {
                               ],
                             ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () {},
+                              icon: const Icon(Icons.remove_red_eye),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ResidentRegisterPage(
+                                      resident: resident,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         );
