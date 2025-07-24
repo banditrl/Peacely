@@ -26,7 +26,7 @@ class ControlPanelPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/resident-edit'),
+              onPressed: () => Navigator.pushNamed(context, '/resident-view'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 minimumSize: const Size(double.infinity, 50),

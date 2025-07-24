@@ -173,16 +173,13 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
               const SizedBox(height: 24),
 
               // Photos
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Fotos:'),
-                  ElevatedButton.icon(
-                    onPressed: _pickImage,
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Tirar Foto'),
-                  ),
-                ],
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Tirar Foto'),
+                ),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -213,17 +210,15 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
               const SizedBox(height: 24),
 
               // Files
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Arquivos:'),
-                  ElevatedButton.icon(
-                    onPressed: _pickFiles,
-                    icon: const Icon(Icons.upload_file),
-                    label: const Text('Selecionar Arquivos'),
-                  ),
-                ],
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _pickFiles,
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Selecionar Arquivos'),
+                ),
               ),
+
               const SizedBox(height: 8),
               Column(
                 children: List.generate(
@@ -240,15 +235,18 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
 
               const SizedBox(height: 32),
 
-              ElevatedButton(
-                onPressed: _isSaving ? null : _save,
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Salvar'),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isSaving ? null : _save,
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Salvar'),
+                ),
               ),
             ],
           ),
@@ -265,7 +263,8 @@ class _ResidentRegisterPageState extends State<ResidentRegisterPage> {
     return TextFormField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      validator: (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null,
+      validator: (value) =>
+          value == null || value.isEmpty ? 'Campo obrigatório' : null,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
